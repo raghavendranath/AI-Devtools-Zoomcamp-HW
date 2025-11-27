@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Todo App{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        * {
+            color-scheme: light;
+        }
+        body {
+            background-color: #f5f7fa;
+            padding-top: 0;
+            min-height: 100vh;
+        }
+        .navbar {
+            background-color: #f8fafb !important;
+            border-bottom: 2px solid #e8eef5;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            padding: 1rem 0;
+        }
+        .navbar-brand {
+            font-size: 1.6rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            color: #4a5f7f !important;
+        }
+        .navbar-text {
+            color: #7a8fa6 !important;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        .navbar .container {
+            background: none !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+            margin-top: 0 !important;
+            margin-bottom: 0 !important;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            margin-top: 30px;
+            margin-bottom: 30px;
+            border: 1px solid #e8eef5;
+        }
+        .todo-item {
+            padding: 16px;
+            margin-bottom: 12px;
+            border-left: 4px solid #6b9fc7;
+            background-color: #f9fbfd;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            border: 1px solid #e8eef5;
+            border-left: 4px solid #6b9fc7;
+        }
+        .todo-item:hover {
+            box-shadow: 0 4px 12px rgba(107, 159, 199, 0.12);
+            transform: translateY(-2px);
+            background-color: #fcfdfe;
+        }
+        .todo-item.resolved {
+            opacity: 0.75;
+            border-left-color: #7cb9a8;
+            background-color: #f5faf8;
+        }
+        .todo-item.resolved .todo-title {
+            text-decoration: line-through;
+            color: #9a9fa6;
+        }
+        .btn-group-sm {
+            gap: 6px;
+        }
+        .btn-primary {
+            background-color: #6b9fc7 !important;
+            border-color: #6b9fc7 !important;
+            font-weight: 500;
+        }
+        .btn-primary:hover {
+            background-color: #5a8fa8 !important;
+            border-color: #5a8fa8 !important;
+        }
+        .btn-success {
+            background-color: #7cb9a8 !important;
+            border-color: #7cb9a8 !important;
+            font-weight: 500;
+        }
+        .btn-info {
+            background-color: #8fb3d4 !important;
+            border-color: #8fb3d4 !important;
+            font-weight: 500;
+        }
+        .btn-danger {
+            background-color: #c97a7a !important;
+            border-color: #c97a7a !important;
+            font-weight: 500;
+        }
+        .btn-warning {
+            background-color: #d4a574 !important;
+            border-color: #d4a574 !important;
+            color: white !important;
+            font-weight: 500;
+        }
+        .due-date {
+            font-size: 0.85em;
+            color: #7a8fa6;
+            margin-top: 8px;
+            font-weight: 500;
+        }
+        .page-title {
+            color: #4a5f7f;
+            font-weight: 600;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #6b9fc7;
+        }
+        h1 {
+            color: #4a5f7f;
+            font-weight: 600;
+        }
+        h5.todo-title {
+            color: #2c3e50;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .text-muted {
+            color: #7a8fa6 !important;
+        }
+        .alert {
+            background-color: #f0f4f8;
+            border: 1px solid #d9e4f0;
+            color: #4a5f7f;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div style="width: 100%; padding: 0 20px; display: flex; justify-content: space-between; align-items: center;">
+            <a class="navbar-brand" href="{% url 'todo-list' %}" style="margin: 0;">
+                ✓ Todo App
+            </a>
+            <span class="navbar-text">
+                <i>Stay organized and productive</i>
+            </span>
+        </div>
+    </nav>
+
+    <div class="container" style="max-width: 800px;">
+        {% block content %}{% endblock %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

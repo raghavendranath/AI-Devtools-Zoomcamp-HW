@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if form.instance.pk %}Edit Todo{% else %}Create Todo{% endif %}{% endblock %}
+
+{% block content %}
+<h1>{% if form.instance.pk %}Edit Todo{% else %}Create New Todo{% endif %}</h1>
+<hr>
+
+<form method="post" class="needs-validation">
+    {% csrf_token %}
+
+    <div class="mb-3">
+        <label for="{{ form.title.id_for_label }}" class="form-label">Title *</label>
+        {{ form.title }}
+        {% if form.title.errors %}
+            <div class="invalid-feedback d-block">
+                {{ form.title.errors }}
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="mb-3">
+        <label for="{{ form.description.id_for_label }}" class="form-label">Description</label>
+        {{ form.description }}
+        {% if form.description.errors %}
+            <div class="invalid-feedback d-block">
+                {{ form.description.errors }}
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="mb-3">
+        <label for="{{ form.due_date.id_for_label }}" class="form-label">Due Date</label>
+        {{ form.due_date }}
+        {% if form.due_date.errors %}
+            <div class="invalid-feedback d-block">
+                {{ form.due_date.errors }}
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">
+            {% if form.instance.pk %}Update Todo{% else %}Create Todo{% endif %}
+        </button>
+        <a href="{% url 'todo-list' %}" class="btn btn-secondary">Cancel</a>
+    </div>
+</form>
+{% endblock %}
