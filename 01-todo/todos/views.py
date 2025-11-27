@@ -38,3 +38,11 @@ class TodoResolveView(View):
         todo.resolved = not todo.resolved
         todo.save()
         return redirect('todo-list')
+
+
+class TodoBulkDeleteView(View):
+    def post(self, request):
+        selected_ids = request.POST.getlist('selected_todos')
+        if selected_ids:
+            Todo.objects.filter(pk__in=selected_ids).delete()
+        return redirect('todo-list')

@@ -14,31 +14,64 @@
 <hr>
 
 {% if todos %}
+    <div id="bulk-actions" class="bulk-actions-container" style="display: none; margin-bottom: 20px;">
+        <div class="d-flex align-items-center gap-3">
+            <span class="selected-count">
+                <strong id="count">0</strong> selected
+            </span>
+            <button type="button" class="btn btn-danger btn-sm" onclick="bulkDeleteTodos()" id="bulk-delete-btn">
+                <i class="bi bi-trash"></i> Delete Selected
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="clearAllSelections()">
+                Clear Selection
+            </button>
+        </div>
+    </div>
+
+    <form id="bulk-form" method="post" action="{% url 'todo-bulk-delete' %}" style="display: none;">
+        {% csrf_token %}
+    </form>
+
+    <!-- Hidden form for individual todo deletion -->
+    <form id="hidden-delete-form" method="post" style="display: none;">
+        {% csrf_token %}
+    </form>
+
     {% for todo in todos %}
-    <div class="todo-item {% if todo.resolved %}resolved{% endif %}">
-        <div class="row">
-            <div class="col-md-9">
-                <h5 class="todo-title">{{ todo.title }}</h5>
-                {% if todo.description %}
-                <p class="text-muted">{{ todo.description }}</p>
-                {% endif %}
-                {% if todo.due_date %}
-                <div class="due-date">
-                    <strong>Due:</strong> {{ todo.due_date|date:"M d, Y" }}
+    <div id="todo-item-{{ todo.pk }}" class="todo-item {% if todo.resolved %}resolved{% endif %}">
+        <div class="row align-items-center">
+            <div class="col-md-1">
+                <div class="form-check">
+                    <input class="form-check-input todo-checkbox" type="checkbox" name="selected_todos" value="{{ todo.pk }}" id="todo-{{ todo.pk }}">
                 </div>
-                {% endif %}
+            </div>
+            <div class="col-md-8">
+                <label for="todo-{{ todo.pk }}" style="cursor: pointer; margin-bottom: 0;">
+                    <h5 class="todo-title">{{ todo.title }}</h5>
+                    {% if todo.description %}
+                    <p class="text-muted">{{ todo.description }}</p>
+                    {% endif %}
+                    {% if todo.due_date %}
+                    <div class="due-date">
+                        <strong>Due:</strong> {{ todo.due_date|date:"M d, Y" }}
+                    </div>
+                    {% endif %}
+                </label>
             </div>
             <div class="col-md-3">
-                <div class="btn-group-sm d-flex justify-content-end">
+                <div class="btn-group-sm d-flex justify-content-end gap-2">
                     <form method="post" action="{% url 'todo-resolve' todo.pk %}" style="display: inline;">
                         {% csrf_token %}
-                        <button type="submit" class="btn {% if todo.resolved %}btn-success{% else %}btn-warning{% endif %} btn-sm">
+                        <button type="submit" class="btn {% if todo.resolved %}btn-success{% else %}btn-warning{% endif %} btn-sm icon-btn" title="{% if todo.resolved %}Mark as pending{% else %}Mark as done{% endif %}">
                             <i class="bi {% if todo.resolved %}bi-check-circle-fill{% else %}bi-check-circle{% endif %}"></i>
-                            {% if todo.resolved %}Done{% else %}Mark Done{% endif %}
                         </button>
                     </form>
-                    <a href="{% url 'todo-edit' todo.pk %}" class="btn btn-info btn-sm"><i class="bi bi-pencil"></i> Edit</a>
-                    <a href="{% url 'todo-delete' todo.pk %}" class="btn btn-danger btn-sm"><i class="bi bi-trash"></i> Delete</a>
+                    <a href="{% url 'todo-edit' todo.pk %}" class="btn btn-info btn-sm icon-btn" title="Edit">
+                        <i class="bi bi-pencil"></i>
+                    </a>
+                    <button type="button" class="btn btn-danger btn-sm icon-btn delete-btn" data-todo-id="{{ todo.pk }}" data-todo-title="{{ todo.title }}" title="Delete">
+                        <i class="bi bi-trash"></i>
+                    </button>
                 </div>
             </div>
         </div>
@@ -49,4 +82,308 @@
         <p>No todos yet. <a href="{% url 'todo-create' %}">Create one</a></p>
     </div>
 {% endif %}
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Delete Todo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <div class="delete-warning-icon">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                </div>
+                <h6 class="mb-3">Are you sure?</h6>
+                <p class="text-muted mb-2">You are about to delete:</p>
+                <p class="mb-4"><strong id="deleteItemTitle" style="color: #e0e6ed;"></strong></p>
+                <p class="small text-muted">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .icon-btn {
+        width: 38px;
+        height: 38px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        border-radius: 6px;
+        font-size: 1.1rem;
+    }
+
+    .icon-btn:hover {
+        transform: scale(1.1) rotate(2deg);
+    }
+
+    .form-check-input {
+        width: 1.25rem;
+        height: 1.25rem;
+        cursor: pointer;
+        border: 2px solid #d4b5d9;
+        background-color: transparent;
+        transition: all 0.3s ease;
+        border-radius: 4px;
+    }
+
+    .form-check-input:checked {
+        background: linear-gradient(135deg, #d89fe5 0%, #c48dd9 100%);
+        border-color: #c48dd9;
+        box-shadow: 0 0 8px rgba(196, 141, 217, 0.4);
+    }
+
+    .bulk-actions-container {
+        background: linear-gradient(135deg, #fdfbfa 0%, #fcf9f7 100%);
+        padding: 16px;
+        border-radius: 10px;
+        border: 2px solid #ead9ec;
+        box-shadow: 0 4px 12px rgba(196, 141, 217, 0.12);
+    }
+
+    .selected-count {
+        color: #5a5a5a;
+        font-size: 0.95rem;
+    }
+
+    .gap-2 {
+        gap: 0.5rem;
+    }
+
+    .gap-3 {
+        gap: 1rem;
+    }
+
+    /* Slide out animation for deleted todos */
+    .todo-item.slide-out {
+        animation: slideOut 0.4s ease-in-out forwards;
+    }
+
+    @keyframes slideOut {
+        0% {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        100% {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+    }
+
+    /* Custom modal styling for light pastel mode */
+    .modal-content {
+        background-color: #ffffff;
+        border: 1px solid #f0e6e0;
+    }
+
+    .modal-header {
+        border-bottom: 1px solid #f0e6e0;
+        background-color: #faf8f7;
+    }
+
+    .modal-header .btn-close {
+        filter: brightness(0.6);
+    }
+
+    .modal-body {
+        color: #5a5a5a;
+    }
+
+    .delete-warning-icon {
+        font-size: 3rem;
+        color: #f08080;
+        margin-bottom: 1rem;
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.7; }
+        100% { opacity: 1; }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const bulkForm = document.getElementById('bulk-form');
+        const checkboxes = document.querySelectorAll('.todo-checkbox');
+        const bulkActionsDiv = document.getElementById('bulk-actions');
+        const countSpan = document.getElementById('count');
+        const deleteModalEl = document.getElementById('deleteConfirmModal');
+        const deleteButtons = document.querySelectorAll('.delete-btn');
+
+        let pendingDeleteId = null;
+        let pendingDeleteItem = null;
+        let deleteModal = null;
+        let isConfirmedDelete = false;
+
+        // Initialize Bootstrap Modal
+        if (deleteModalEl) {
+            deleteModal = new bootstrap.Modal(deleteModalEl);
+        }
+
+        // Handle bulk checkbox changes
+        function updateBulkActionsVisibility() {
+            const checked = Array.from(checkboxes).filter(cb => cb.checked).length;
+            if (bulkActionsDiv) {
+                bulkActionsDiv.style.display = checked > 0 ? 'block' : 'none';
+            }
+            if (countSpan) {
+                countSpan.textContent = checked;
+            }
+        }
+
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', updateBulkActionsVisibility);
+        });
+
+        window.clearAllSelections = function() {
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            updateBulkActionsVisibility();
+        };
+
+        window.bulkDeleteTodos = function() {
+            const checked = Array.from(checkboxes).filter(cb => cb.checked);
+            if (checked.length === 0) {
+                alert('Please select at least one todo to delete');
+                return;
+            }
+
+            if (!confirm(`Delete ${checked.length} selected todo(s)?`)) {
+                return;
+            }
+
+            // Clear any previous hidden inputs
+            bulkForm.querySelectorAll('input[name="selected_todos"]').forEach(input => input.remove());
+
+            // Add hidden inputs for selected todos
+            checked.forEach(checkbox => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'selected_todos';
+                input.value = checkbox.value;
+                bulkForm.appendChild(input);
+            });
+
+            // Submit the form
+            bulkForm.submit();
+        };
+
+        // Handle individual delete button clicks using event delegation
+        // This works even if buttons are added dynamically
+        document.addEventListener('click', function(e) {
+            const deleteBtn = e.target.closest('.delete-btn');
+            if (!deleteBtn || !deleteModal) return;
+
+            e.preventDefault();
+            console.log('Delete button clicked');
+
+            // Get ID from button's data attributes (try multiple methods)
+            let todoId = deleteBtn.getAttribute('data-todo-id');
+            let todoTitle = deleteBtn.getAttribute('data-todo-title');
+
+            // Fallback to dataset if getAttribute didn't work
+            if (!todoId) {
+                todoId = deleteBtn.dataset.todoId;
+                console.log('Using dataset method for ID');
+            }
+            if (!todoTitle) {
+                todoTitle = deleteBtn.dataset.todoTitle;
+                console.log('Using dataset method for title');
+            }
+
+            console.log('Delete button element:', deleteBtn);
+            console.log('All attributes:', deleteBtn.outerHTML);
+            console.log('From data attributes - ID:', todoId, 'Title:', todoTitle);
+
+            // Get the parent todo item for animation
+            const todoItem = deleteBtn.closest('.todo-item');
+
+            // Validate ID
+            if (!todoId || todoId === 'null' || todoId === '' || todoId === null) {
+                console.error('ERROR: Invalid todo ID from data attribute:', todoId);
+                alert('Error: Could not identify todo. Please refresh the page and try again.');
+                return;
+            }
+
+            pendingDeleteId = String(todoId).trim();
+            pendingDeleteItem = todoItem;
+
+            console.log('Set pendingDeleteId to:', pendingDeleteId);
+
+            // Update modal with todo title
+            const deleteItemTitle = document.getElementById('deleteItemTitle');
+            if (deleteItemTitle) {
+                deleteItemTitle.textContent = todoTitle || 'this item';
+            }
+
+            console.log('Opening delete modal for ID:', pendingDeleteId);
+
+            // Show modal
+            deleteModal.show();
+        }, true);  // Use capture phase to ensure we catch the click
+
+        // Handle confirm delete button
+        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+        const hiddenDeleteForm = document.getElementById('hidden-delete-form');
+        if (confirmDeleteBtn) {
+            confirmDeleteBtn.addEventListener('click', function() {
+                console.log('Confirm delete clicked. pendingDeleteId:', pendingDeleteId);
+
+                if (!pendingDeleteId || pendingDeleteId === 'null' || pendingDeleteId === '') {
+                    console.error('ERROR: No pending delete ID set!');
+                    alert('Error: Todo ID is not set. Please refresh and try again.');
+                    return;
+                }
+
+                // Set flag so we don't reset the ID when modal closes
+                isConfirmedDelete = true;
+
+                if (deleteModal) {
+                    // Close modal
+                    deleteModal.hide();
+                }
+
+                // Animate slide out
+                if (pendingDeleteItem) {
+                    pendingDeleteItem.classList.add('slide-out');
+                }
+
+                // After animation completes, submit delete request
+                setTimeout(() => {
+                    const deleteUrl = `/todos/${pendingDeleteId}/delete/`;
+                    console.log('Submitting POST to:', deleteUrl);
+
+                    // Update the form action and submit
+                    hiddenDeleteForm.action = deleteUrl;
+                    hiddenDeleteForm.method = 'POST';
+                    hiddenDeleteForm.submit();
+                }, 400);
+            });
+        }
+
+        // Reset pending delete when modal is cancelled/closed (but NOT after confirm)
+        if (deleteModalEl) {
+            deleteModalEl.addEventListener('hidden.bs.modal', function() {
+                // Only reset if this wasn't a confirmed delete
+                if (!isConfirmedDelete) {
+                    console.log('Modal dismissed without delete - resetting');
+                    pendingDeleteId = null;
+                    pendingDeleteItem = null;
+                }
+                isConfirmedDelete = false;
+            });
+        }
+    });
+</script>
 {% endblock %}

@@ -5,6 +5,7 @@ from .views import (
     TodoUpdateView,
     TodoDeleteView,
     TodoResolveView,
+    TodoBulkDeleteView,
 )
 
 urlpatterns = [
@@ -13,4 +14,5 @@ urlpatterns = [
     path('<int:pk>/edit/', TodoUpdateView.as_view(), name='todo-edit'),
     path('<int:pk>/delete/', TodoDeleteView.as_view(), name='todo-delete'),
     path('<int:pk>/resolve/', TodoResolveView.as_view(), name='todo-resolve'),
+    path('bulk-delete/', TodoBulkDeleteView.as_view(), name='todo-bulk-delete'),
 ]
