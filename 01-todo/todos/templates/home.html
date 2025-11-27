@@ -33,11 +33,12 @@
                     <form method="post" action="{% url 'todo-resolve' todo.pk %}" style="display: inline;">
                         {% csrf_token %}
                         <button type="submit" class="btn {% if todo.resolved %}btn-success{% else %}btn-warning{% endif %} btn-sm">
-                            {% if todo.resolved %}✓ Done{% else %}Mark Done{% endif %}
+                            <i class="bi {% if todo.resolved %}bi-check-circle-fill{% else %}bi-check-circle{% endif %}"></i>
+                            {% if todo.resolved %}Done{% else %}Mark Done{% endif %}
                         </button>
                     </form>
-                    <a href="{% url 'todo-edit' todo.pk %}" class="btn btn-info btn-sm">Edit</a>
-                    <a href="{% url 'todo-delete' todo.pk %}" class="btn btn-danger btn-sm">Delete</a>
+                    <a href="{% url 'todo-edit' todo.pk %}" class="btn btn-info btn-sm"><i class="bi bi-pencil"></i> Edit</a>
+                    <a href="{% url 'todo-delete' todo.pk %}" class="btn btn-danger btn-sm"><i class="bi bi-trash"></i> Delete</a>
                 </div>
             </div>
         </div>
